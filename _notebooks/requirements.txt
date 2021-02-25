@@ -1,0 +1,15 @@
+matplotlib
+pandas
+seaborn
+papermill
+ipykernel
+jupyter
+jupytext
+psutil
+arviz
+xlrd
+altair
+altair_saver
+jinja2
+selenium
+geopandas

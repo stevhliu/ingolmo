@@ -13,32 +13,32 @@
 // font size
 .post-content p, .post-content li {
     font-size: 16px;
- }
+}
 
- // remove borders on home page and around boxes
+// remove borders on home page and around boxes
 .site-header {
     border: none;
 }
 
 .site-footer {
     border: none;
- }
+}
  
- .post-list > li > div {
+.post-list > li > div {
      box-shadow: none !important;
      border: none !important;
- }
+}
 
- // code font size
+// code font size
 pre, code {
     font-size: 12px;
-  }
+}
 
 // adjust background color of code cells
 pre, code {
     border: #8f91ff;
     background-color: #9EE8C4;
- }
+}
 
  // increase content width
 .wrapper {
@@ -61,4 +61,4 @@ pre, code {
     width: auto;
     height: 100%;
     align-content: center;
-  }
+}
