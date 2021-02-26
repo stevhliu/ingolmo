@@ -29,15 +29,23 @@
      border: none !important;
 }
 
+// code font size in dracula
+.highlight {
+    pre, code {
+     font-size: 90%;
+    }
+}
+
 // code font size
 pre, code {
     font-size: 12px;
 }
 
-// adjust background color of code cells
+// adjust background color of code cells and font size
 pre, code {
     border: #8f91ff;
     background-color: #9EE8C4;
+    font-size: 12px;
 }
 
  // increase content width
