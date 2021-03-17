@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.6.1 -->
+<title>astroGPT | steven liu’s blog</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="astroGPT" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="How to fine-tune a GPT-2 model with fastai and 🤗 Hugging Face to generate daily horoscopes" />
+<meta property="og:description" content="How to fine-tune a GPT-2 model with fastai and 🤗 Hugging Face to generate daily horoscopes" />
+<link rel="canonical" href="https://stevhliu.github.io/ingolmo/gpt2/huggingface/nlp/2020/09/23/astroGPT.html" />
+<meta property="og:url" content="https://stevhliu.github.io/ingolmo/gpt2/huggingface/nlp/2020/09/23/astroGPT.html" />
+<meta property="og:site_name" content="steven liu’s blog" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2020-09-23T00:00:00-05:00" />
+<script type="application/ld+json">
+{"description":"How to fine-tune a GPT-2 model with fastai and 🤗 Hugging Face to generate daily horoscopes","headline":"astroGPT","dateModified":"2020-09-23T00:00:00-05:00","datePublished":"2020-09-23T00:00:00-05:00","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https://stevhliu.github.io/ingolmo/gpt2/huggingface/nlp/2020/09/23/astroGPT.html"},"url":"https://stevhliu.github.io/ingolmo/gpt2/huggingface/nlp/2020/09/23/astroGPT.html","@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/ingolmo/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://stevhliu.github.io/ingolmo/feed.xml" title="steven liu's blog" /><link rel="shortcut icon" type="image/x-icon" href="/ingolmo/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/ingolmo/">steven liu&#39;s blog</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/ingolmo/about/">About Me</a><a class="page-link" href="/ingolmo/search/">Search</a><a class="page-link" href="/ingolmo/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">astroGPT</h1><p class="page-description">How to fine-tune a GPT-2 model with fastai and 🤗 Hugging Face to generate daily horoscopes</p><p class="post-meta post-meta-title"><time class="dt-published" datetime="2020-09-23T00:00:00-05:00" itemprop="datePublished">
+        Sep 23, 2020
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      5 min read
+    
+</span></p>
+
+    
+      <p class="category-tags"><i class="fas fa-tags category-tags-icon"></i></i> 
+      
+        <a class="category-tags-link" href="/ingolmo/categories/#gpt2">gpt2</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/ingolmo/categories/#huggingface">huggingface</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/ingolmo/categories/#nlp">nlp</a>
+        
+      
+      </p>
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-wrap flex-justify-end">
+          
+          
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/stevhliu/ingolmo/blob/master/_notebooks/2020-09-23-astroGPT.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/ingolmo/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <ul class="section-nav">
+<li class="toc-entry toc-h2"><a href="#Introduction">Introduction </a></li>
+<li class="toc-entry toc-h2"><a href="#Data">Data </a></li>
+<li class="toc-entry toc-h2"><a href="#Training-the-fastai-way">Training the fastai way </a>
+<ul>
+<li class="toc-entry toc-h3"><a href="#Learning-rate-finder">Learning rate finder </a></li>
+<li class="toc-entry toc-h3"><a href="#Discriminative-fine-tuning">Discriminative fine-tuning </a></li>
+<li class="toc-entry toc-h3"><a href="#1cycle-training">1cycle training </a></li>
+</ul>
+</li>
+<li class="toc-entry toc-h2"><a href="#fastai-and-🤗-Hugging-Face">fastai and 🤗 Hugging Face </a></li>
+<li class="toc-entry toc-h2"><a href="#Generating-horoscopes-🔮">Generating horoscopes 🔮 </a></li>
+</ul><!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2020-09-23-astroGPT.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Introduction">
+<a class="anchor" href="#Introduction" aria-hidden="true"><span class="octicon octicon-link"></span></a>Introduction<a class="anchor-link" href="#Introduction"> </a>
+</h2>
+<p>In the last <a href="https://stevhliu.github.io/satsuma/transformer/gpt2/huggingface/nlp/2020/09/08/transformer-gpt2.html">post</a>, I shared some notes on understanding the Transformer, GPT-2 and different decoding strategies for generating text. Now for something a little more practical (and fun! 😊), let's fine-tune GPT-2 to generate horoscopes.
+
+</p>
+<center>
+    <div class="jekyll-twitter-plugin">
+<blockquote class="twitter-tweet">
+<p lang="en" dir="ltr">Want to generate your daily horoscope?<br><br>AstroGPT 🪐 – by <a href="https://twitter.com/stevhliu?ref_src=twsrc%5Etfw">@stevhliu</a><br><br>GPT-2 model fine-tuned on Western zodiac signs<br><br>Input today's date on:<br><br>🔮 <a href="https://t.co/uCUVsmgmE7">https://t.co/uCUVsmgmE7</a></p>— Hugging Face (@huggingface) <a href="https://twitter.com/huggingface/status/1302289493915992066?ref_src=twsrc%5Etfw">September 5, 2020</a>
+</blockquote>
+<script async="" src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+</div>
+</center>
+
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Data">
+<a class="anchor" href="#Data" aria-hidden="true"><span class="octicon octicon-link"></span></a>Data<a class="anchor-link" href="#Data"> </a>
+</h2>
+<p>To start, we need some horoscopes to fine-tune the model with. The only publicly available dataset I could find was from a similar <a href="https://github.com/dsnam/markovscope">project</a> that pulled horoscopes from The New York Post. However, it didn't contain as much text as I had hoped for, so I built my own scraper to collect data from <a href="https://www.horoscope.com/us/index.aspx">Horoscope.com</a>. The dataset contains a years worth of horoscopes for each of the twelve zodiac signs across several categories (daily, love, wellness, career). Once we have the data, we can create a training and validation set using a 80/20 split (<code>all_text</code> contains all the text).</p>
+<div class="highlight"><pre><span></span><span class="n">num</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mf">0.8</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">all_text</span><span class="p">))</span>
+
+<span class="n">idxs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">all_text</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">all_text</span><span class="p">))</span>
+<span class="n">idxs_train</span> <span class="o">=</span> <span class="n">idxs</span><span class="p">[:</span><span class="n">num</span><span class="p">]</span>
+<span class="n">idxs_val</span> <span class="o">=</span> <span class="n">idxs</span><span class="p">[</span><span class="n">num</span><span class="p">:]</span>
+
+<span class="n">train</span> <span class="o">=</span> <span class="n">all_text</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">idxs_train</span><span class="p">]</span>
+<span class="n">test</span> <span class="o">=</span> <span class="n">all_text</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">idxs_val</span><span class="p">]</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Training-the-fastai-way">
+<a class="anchor" href="#Training-the-fastai-way" aria-hidden="true"><span class="octicon octicon-link"></span></a>Training the fastai way<a class="anchor-link" href="#Training-the-fastai-way"> </a>
+</h2>
+<p><img src="https://raw.githubusercontent.com/stevhliu/ingolmo/master/images/fastai_hf.png" alt="fastai_hf.png"></p>
+<p>The next step is to fine-tune GPT-2 on the horoscopes. <a href="https://docs.fast.ai/">fastai</a> makes this part really simple, and offers amazing utilities like the learning rate finder, discriminative fine-tuning and 1cycle training. If you aren't familiar with these concepts, I highly recommend taking the fastai course, <a href="https://course.fast.ai/index.html"><em>Practical Deep Learning for Coders</em></a>, by Jeremy Howard and Sylvain Gugger 👏.</p>
+<p>I'll just provide a brief summary of these ideas here, so I don't spoil anything in case you're interested in the course!</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Learning-rate-finder">
+<a class="anchor" href="#Learning-rate-finder" aria-hidden="true"><span class="octicon octicon-link"></span></a>Learning rate finder<a class="anchor-link" href="#Learning-rate-finder"> </a>
+</h3>
+<p>In the past, selecting an optimal learning rate has been challenging. If your learning rate is too high it will blow your training up, but if it is too low the model will train very, very slowly. So in 2015, Leslie Smith came up with the learning rate finder (see this <a href="https://arxiv.org/abs/1506.01186">paper</a> for the details). The idea is simple: begin training the model with a small learning rate and then gradually increase it until the loss gets worse and worse (we record and plot the loss after each mini-batch to generate a chart). All we have to do then is pick a learning rate where the loss is decreasing. The general rule of thumb is to pick an order of magnitude less than the point where things begin to get worse.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Discriminative-fine-tuning">
+<a class="anchor" href="#Discriminative-fine-tuning" aria-hidden="true"><span class="octicon octicon-link"></span></a>Discriminative fine-tuning<a class="anchor-link" href="#Discriminative-fine-tuning"> </a>
+</h3>
+<p>Discriminative learning rates was introduced in <a href="https://arxiv.org/abs/1801.06146">ULMFiT</a> by Jeremy Howard and Sebastian Ruder. It is based on the observation that not every layer of the neural net should be trained with the same learning rate. The earliest layers of a neural net detects basic patterns, while the later layers learn more complex things. In other words, different layers of the neural net represent different levels of semantic complexity. So if the early layers are already pretty good at recognizing these simple patterns, then we shouldn't change their weights too much (set a lower learning rate). But for the more complex patterns in the later layers, we use a higher learning rate so that they train and learn better.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="1cycle-training">
+<a class="anchor" href="#1cycle-training" aria-hidden="true"><span class="octicon octicon-link"></span></a>1cycle training<a class="anchor-link" href="#1cycle-training"> </a>
+</h3>
+<p>This is another amazing <a href="https://arxiv.org/abs/1708.07120">idea</a> from Leslie Smith for training neural nets. Simply put, you begin training with a lower learning rate and then gradually increase that to some maximum value. This way, you avoid letting your training get out of hand and instead discover increasingly better parameters. Once you get to a sweet spot on the loss landscape, you lower the learning rate again to really hone in on the best parameters. Combined, this <em>warming up</em> and <em>cooling down</em> is known as 1cycle training and it allows you to train faster and more accurately.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="fastai-and-🤗-Hugging-Face">
+<a class="anchor" href="#fastai-and-%F0%9F%A4%97-Hugging-Face" aria-hidden="true"><span class="octicon octicon-link"></span></a>fastai and 🤗 Hugging Face<a class="anchor-link" href="#fastai-and-%F0%9F%A4%97-Hugging-Face"> </a>
+</h2>
+<p>To get started, download the pre-trained GPT-2 model from <a href="https://huggingface.co/gpt2">Hugging Face</a>.</p>
+<div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">transformers</span> <span class="kn">import</span> <span class="n">GPT2LMHeadModel</span><span class="p">,</span> <span class="n">GPT2TokenizerFast</span>
+
+<span class="n">pretrained_weights</span> <span class="o">=</span> <span class="s1">'gpt2'</span>
+<span class="n">tokenizer</span> <span class="o">=</span> <span class="n">GPT2TokenizerFast</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">pretrained_weights</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">GPT2LMHeadModel</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">pretrained_weights</span><span class="p">)</span>
+</pre></div>
+<p>Next, build a <code>Transform</code> that tokenizes the text. Luckily for us, Sylvain has already demonstrated how we can use fastai with Hugging Face and provided a <a href="https://docs.fast.ai/tutorial.transformers">tutorial</a> that we can follow.</p>
+<div class="highlight"><pre><span></span><span class="n">all_text</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">df_train</span><span class="p">[</span><span class="s1">'text'</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">df_valid</span><span class="p">[</span><span class="s1">'text'</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">])</span>
+
+<span class="k">class</span> <span class="nc">TransformersTokenizer</span><span class="p">(</span><span class="n">Transform</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tokenizer</span><span class="p">):</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span> <span class="o">=</span> <span class="n">tokenizer</span>
+    <span class="k">def</span> <span class="nf">encodes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span> 
+        <span class="n">toks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span><span class="o">.</span><span class="n">tokenize</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">tensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span><span class="o">.</span><span class="n">convert_tokens_to_ids</span><span class="p">(</span><span class="n">toks</span><span class="p">))</span>
+    <span class="k">def</span> <span class="nf">decodes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span> <span class="k">return</span> <span class="n">TitledStr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()))</span>
+</pre></div>
+<p>Then you specify the training and validation sets.</p>
+<div class="highlight"><pre><span></span><span class="n">splits</span> <span class="o">=</span> <span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">range_of</span><span class="p">(</span><span class="n">df_train</span><span class="p">)),</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">df_train</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">all_text</span><span class="p">)))]</span>
+</pre></div>
+<p>Put together everything we need to handle our data:</p>
+<ul>
+<li>all the text data ✅</li>
+<li>the GPT-2 tokenizer ✅</li>
+<li>the training and validation splits ✅</li>
+<li>set the dataloader type to <code>LMDataLoader</code> because we're using a language model ✅</li>
+</ul>
+<div class="highlight"><pre><span></span><span class="n">tls</span> <span class="o">=</span> <span class="n">TfmdLists</span><span class="p">(</span><span class="n">all_text</span><span class="p">,</span> <span class="n">TransformersTokenizer</span><span class="p">(</span><span class="n">tokenizer</span><span class="p">),</span> <span class="n">splits</span><span class="o">=</span><span class="n">splits</span><span class="p">,</span> <span class="n">dl_type</span><span class="o">=</span><span class="n">LMDataLoader</span><span class="p">)</span>
+</pre></div>
+<p>Create a <code>DataLoader</code> and set the batch size and sequence length. You may have to adjust your batch size depending on your GPU memory. GPT-2 was trained on sequences of size 1024 so we will just keep it as it is.</p>
+<div class="highlight"><pre><span></span><span class="n">bs</span><span class="p">,</span><span class="n">sl</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span><span class="mi">1024</span>
+<span class="n">dls</span> <span class="o">=</span> <span class="n">tls</span><span class="o">.</span><span class="n">dataloaders</span><span class="p">(</span><span class="n">bs</span><span class="o">=</span><span class="n">bs</span><span class="p">,</span> <span class="n">seq_len</span><span class="o">=</span><span class="n">sl</span><span class="p">)</span>
+</pre></div>
+<p>To get Hugging Face to work with fastai, we add a minor modification to the training loop with a callback. The Hugging Face model returns a tuple (see <a href="https://huggingface.co/transformers/model_doc/gpt2.html#gpt2lmheadmodel">here</a>) that contains the predictions and some other things. We only want the predictions so we drop the other stuff with a callback.</p>
+<div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">DropOutput</span><span class="p">(</span><span class="n">Callback</span><span class="p">):</span>
+  <span class="k">def</span> <span class="nf">after_pred</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="bp">self</span><span class="o">.</span><span class="n">learn</span><span class="o">.</span><span class="n">pred</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pred</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</pre></div>
+<p>Then create a <code>Learner</code> object which contains the data, model, loss function, the custom callback and a metric for evaluating the language model. We use mixed precision to train faster and save some memory.</p>
+<div class="highlight"><pre><span></span><span class="n">learn</span> <span class="o">=</span> <span class="n">Learner</span><span class="p">(</span><span class="n">dls</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">loss_func</span><span class="o">=</span><span class="n">CrossEntropyLossFlat</span><span class="p">(),</span> <span class="n">cbs</span><span class="o">=</span><span class="p">[</span><span class="n">DropOutput</span><span class="p">],</span> <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="n">Perplexity</span><span class="p">()])</span><span class="o">.</span><span class="n">to_fp16</span><span class="p">()</span>
+</pre></div>
+<p>Use the learning rate finder to discover a good learning rate.</p>
+<div class="highlight"><pre><span></span><span class="n">learn</span><span class="o">.</span><span class="n">lr_find</span><span class="p">()</span>
+</pre></div>
+<p>Once you've picked a good learning rate, we do discriminative learning rates and 1cycle training.</p>
+<div class="highlight"><pre><span></span><span class="n">learn</span><span class="o">.</span><span class="n">fit_one_cycle</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mf">5e-3</span><span class="p">)</span>
+
+<span class="n">learn</span><span class="o">.</span><span class="n">fit_one_cycle</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="n">lr_max</span><span class="o">=</span><span class="nb">slice</span><span class="p">(</span><span class="mf">1e-7</span><span class="p">,</span> <span class="mf">1e-5</span><span class="p">))</span>
+
+<span class="n">learn</span><span class="o">.</span><span class="n">fit_one_cycle</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="n">lr_max</span><span class="o">=</span><span class="nb">slice</span><span class="p">(</span><span class="mf">1e-7</span><span class="p">,</span> <span class="mf">1e-5</span><span class="p">))</span>
+</pre></div>
+<p>Here, you basically train as long as you can until the validation loss doesn't get any better. With my setup, I was able to get the validation loss down to 2.64 and the perplexity to 14.04. This took roughly 2.5 hours on one of Colab's GPU's.</p>
+<p>And just like that you have a fine-tuned GPT-2 model! 🥳</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Generating-horoscopes-🔮">
+<a class="anchor" href="#Generating-horoscopes-%F0%9F%94%AE" aria-hidden="true"><span class="octicon octicon-link"></span></a>Generating horoscopes 🔮<a class="anchor-link" href="#Generating-horoscopes-%F0%9F%94%AE"> </a>
+</h2>
+<p>After you're done fine-tuning your model, you can upload it to the Hugging Face Model Hub so that everyone can easily use it. Just follow the steps <a href="https://huggingface.co/transformers/model_sharing.html">here</a>.</p>
+<p>Now for the fun part, load the model and generate your horoscope!</p>
+<div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">transformers</span> <span class="kn">import</span> <span class="n">AutoTokenizer</span><span class="p">,</span> <span class="n">AutoModelWithLMHead</span>
+
+<span class="n">tokenizer</span> <span class="o">=</span> <span class="n">AutoTokenizer</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="s2">"stevhliu/astroGPT"</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">AutoModelWithLMHead</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="s2">"stevhliu/astroGPT"</span><span class="p">)</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+<span class="n">model</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s1">'cuda'</span><span class="p">)</span>
+
+<span class="c1"># input the date as Mon DD, YYYY</span>
+<span class="n">input_ids</span> <span class="o">=</span> <span class="n">tokenizer</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">'Sep 23, 2020'</span><span class="p">,</span> <span class="n">return_tensors</span><span class="o">=</span><span class="s1">'pt'</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s1">'cuda'</span><span class="p">)</span>
+
+<span class="n">sample_output</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">input_ids</span><span class="p">,</span>
+                               <span class="n">do_sample</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> 
+                               <span class="n">max_length</span><span class="o">=</span><span class="mi">75</span><span class="p">,</span>
+                               <span class="n">top_k</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> 
+                               <span class="n">top_p</span><span class="o">=</span><span class="mf">0.97</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">tokenizer</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">sample_output</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="n">skip_special_tokens</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+</div>
+
+
+
+  </div><a class="u-url" href="/ingolmo/gpt2/huggingface/nlp/2020/09/23/astroGPT.html" hidden></a>
+</article>
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/ingolmo/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/ingolmo/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/ingolmo/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p></p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/stevhliu" title="stevhliu"><svg class="svg-icon grey"><use xlink:href="/ingolmo/assets/minima-social-icons.svg#github"></use></svg></a></li><li><a rel="me" href="https://twitter.com/stevhliu" title="stevhliu"><svg class="svg-icon grey"><use xlink:href="/ingolmo/assets/minima-social-icons.svg#twitter"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

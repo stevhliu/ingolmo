@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.6.1 -->
+<title>Transformers, GPT-2 and text generation | steven liu’s blog</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="Transformers, GPT-2 and text generation" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Stuff You Should Know: some notes for understanding how the Transformer and GPT-2 generates text." />
+<meta property="og:description" content="Stuff You Should Know: some notes for understanding how the Transformer and GPT-2 generates text." />
+<link rel="canonical" href="https://stevhliu.github.io/ingolmo/transformer/gpt2/huggingface/nlp/2020/09/08/transformer-gpt2.html" />
+<meta property="og:url" content="https://stevhliu.github.io/ingolmo/transformer/gpt2/huggingface/nlp/2020/09/08/transformer-gpt2.html" />
+<meta property="og:site_name" content="steven liu’s blog" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2020-09-08T00:00:00-05:00" />
+<script type="application/ld+json">
+{"description":"Stuff You Should Know: some notes for understanding how the Transformer and GPT-2 generates text.","headline":"Transformers, GPT-2 and text generation","dateModified":"2020-09-08T00:00:00-05:00","datePublished":"2020-09-08T00:00:00-05:00","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https://stevhliu.github.io/ingolmo/transformer/gpt2/huggingface/nlp/2020/09/08/transformer-gpt2.html"},"url":"https://stevhliu.github.io/ingolmo/transformer/gpt2/huggingface/nlp/2020/09/08/transformer-gpt2.html","@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/ingolmo/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://stevhliu.github.io/ingolmo/feed.xml" title="steven liu's blog" /><link rel="shortcut icon" type="image/x-icon" href="/ingolmo/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/ingolmo/">steven liu&#39;s blog</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/ingolmo/about/">About Me</a><a class="page-link" href="/ingolmo/search/">Search</a><a class="page-link" href="/ingolmo/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Transformers, GPT-2 and text generation</h1><p class="page-description">Stuff You Should Know: some notes for understanding how the Transformer and GPT-2 generates text.</p><p class="post-meta post-meta-title"><time class="dt-published" datetime="2020-09-08T00:00:00-05:00" itemprop="datePublished">
+        Sep 8, 2020
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      14 min read
+    
+</span></p>
+
+    
+      <p class="category-tags"><i class="fas fa-tags category-tags-icon"></i></i> 
+      
+        <a class="category-tags-link" href="/ingolmo/categories/#transformer">transformer</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/ingolmo/categories/#gpt2">gpt2</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/ingolmo/categories/#huggingface">huggingface</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/ingolmo/categories/#nlp">nlp</a>
+        
+      
+      </p>
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-wrap flex-justify-end">
+          
+          
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/stevhliu/ingolmo/blob/master/_notebooks/2020-09-08-transformer-gpt2.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/ingolmo/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <ul class="section-nav">
+<li class="toc-entry toc-h2"><a href="#Introduction">Introduction </a></li>
+<li class="toc-entry toc-h2"><a href="#Transformer">Transformer </a>
+<ul>
+<li class="toc-entry toc-h3"><a href="#Self-attention">Self-attention </a></li>
+<li class="toc-entry toc-h3"><a href="#Multi-head-self-attention">Multi-head self-attention </a></li>
+<li class="toc-entry toc-h3"><a href="#Masked-multi-head-self-attention">Masked multi-head self-attention </a></li>
+<li class="toc-entry toc-h3"><a href="#Model-architecture">Model architecture </a>
+<ul>
+<li class="toc-entry toc-h4"><a href="#Encoder">Encoder </a></li>
+<li class="toc-entry toc-h4"><a href="#Decoder">Decoder </a></li>
+<li class="toc-entry toc-h4"><a href="#Linear-+-Softmax">Linear + Softmax </a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-entry toc-h2"><a href="#GPT-2">GPT-2 </a>
+<ul>
+<li class="toc-entry toc-h3"><a href="#Model-overview">Model overview </a></li>
+<li class="toc-entry toc-h3"><a href="#Byte-level-byte-pair-encoding-(BPE)">Byte-level byte-pair encoding (BPE) </a></li>
+</ul>
+</li>
+<li class="toc-entry toc-h2"><a href="#Decoding-methods-🔍">Decoding methods 🔍 </a>
+<ul>
+<li class="toc-entry toc-h3"><a href="#Greedy-search">Greedy search </a></li>
+<li class="toc-entry toc-h3"><a href="#Beam-search">Beam search </a></li>
+<li class="toc-entry toc-h3"><a href="#Sampling">Sampling </a>
+<ul>
+<li class="toc-entry toc-h4"><a href="#Top-K-sampling">Top-K sampling </a></li>
+<li class="toc-entry toc-h4"><a href="#Top-p-sampling">Top-p sampling </a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul><!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2020-09-08-transformer-gpt2.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Introduction">
+<a class="anchor" href="#Introduction" aria-hidden="true"><span class="octicon octicon-link"></span></a>Introduction<a class="anchor-link" href="#Introduction"> </a>
+</h2>
+<p>Hello! I wanted to share my notes that helped me understand the Transformer, GPT-2 and how they can be used for text generation. This was really helpful because writing it down, and then explaining it in my own words helped me learn so much better.</p>
+<p>The primary resources I used are:</p>
+<ul>
+<li><a href="http://jalammar.github.io/illustrated-transformer/">The Illustrated Transformer</a></li>
+<li><a href="https://nlp.seas.harvard.edu/2018/04/03/attention.html">The Annotated Transformer</a></li>
+<li><a href="http://jalammar.github.io/illustrated-gpt2/">The Illustrated GPT-2</a></li>
+<li>🤗 <a href="https://huggingface.co/transformers/">Hugging Face docs</a>
+</li>
+</ul>
+<p>We will kick things off with the <a href="https://arxiv.org/abs/1706.03762">Transformer</a>, since GPT-2 is just a variant of it.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Transformer">
+<a class="anchor" href="#Transformer" aria-hidden="true"><span class="octicon octicon-link"></span></a>Transformer<a class="anchor-link" href="#Transformer"> </a>
+</h2>
+<p>The Transformer's secret sauce comes from stacking self-attention layers in the encoder-decoder. Attention is exactly what it sounds like, it gives the model the ability to focus on a relevant subset of information. For example, in the sentence below, attention helps the model understand that <code>one</code> refers to <code>ATMs</code>.</p>
+<p><code>There are two ATMs in Antarctica and only one of them works.</code></p>
+<p>So in a nutshell, self-attention allows the model to look at all the other words (also known as <strong>attend to</strong>) in the sentence which lets the Transformer understand how they're all related to the word it is currently processing.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Self-attention">
+<a class="anchor" href="#Self-attention" aria-hidden="true"><span class="octicon octicon-link"></span></a>Self-attention<a class="anchor-link" href="#Self-attention"> </a>
+</h3>
+<p>Secret sauce recipe:</p>
+<ol>
+<li>Multiply each word's embedding by three weight matrices to get a query, key and value vector for each word.</li>
+<li>Next calculate a score for each word so the model knows how much focus to place on each of them. Suppose we are encoding the word <code>ATMs</code>. </li>
+<li>Take the dot product of the query and key for <code>ATMs</code>. Then multiply the query vector of <code>ATMs</code> by the key vector of all the other words in the sentence. Now we have a <strong>score for every word as it relates to <code>ATMs</code></strong>.</li>
+<li>Divide all these scores by a scaling factor that is equal to the square root of the dimension of the key vector. As the dimensionality of the query and key vectors increase, the size of the dot product also increases. To prevent this from blowing up and destabilizing the gradient, we need to rescale these scores. The authors call this <strong>scaled dot-product attention</strong>.</li>
+<li>Pass these values through softmax so that all the scores sum to 1. At this point, we expect relevant words to have higher scores.</li>
+<li>Multiply the softmax scores by their respective value vectors so we amplify the high scoring words and dampen the irrelevant ones.</li>
+<li>Sum up all these values and you get a vector that contains the encoding for <code>ATMs</code>.</li>
+</ol>
+<p>In practice, we do this calculation with matrices instead of vectors because it is much faster that way.</p>
+<p><img src="https://i.imgur.com/CFQz0to.png" alt="" title="created by Javier Abellán"></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Multi-head-self-attention">
+<a class="anchor" href="#Multi-head-self-attention" aria-hidden="true"><span class="octicon octicon-link"></span></a>Multi-head self-attention<a class="anchor-link" href="#Multi-head-self-attention"> </a>
+</h3>
+<p>Mapping the relationship between <code>ATMs</code> and <code>one</code> is just one representation of the sentence (this is learned by one attention head). What if we wanted to know where <code>one</code> is? In this case, it would be better for the Transformer to focus on <code>Antarctica</code> and <code>one</code>, instead of <code>ATMs</code>. So the Transformer is equipped with 8 attention heads to learn and capture all these different relationships from different positions, giving it a richer understanding of the sentence. This makes up the multi-head self-attention sub-layer in each encoder-decoder stack.</p>
+<p>The way we calculate multi-head self-attention is similar to how we calculate self-attention. We do the same calculation 8 different times, each with their own separate weights to generate a bunch of encodings. Then we concatenate these together, multiply it by another set of weights and you end up with a matrix that contains the encoding of a word from multiple positions.</p>
+<p><img src="https://i.imgur.com/Dp8ERiD.png" alt="" title="created by Javier Abellán"></p>
+<p>We can see these learned representations with <a href="https://exbert.net/">exBERT</a> and visualize what each head is doing. So here, notice how head 1 and head 5 (highlighted in blue) are focusing on different parts of the sentence.</p>
+<p><img src="https://raw.githubusercontent.com/stevhliu/ingolmo/master/images/head1.png" alt="">
+<img src="https://raw.githubusercontent.com/stevhliu/ingolmo/master/images/head5.png" alt=""></p>
+<p>Recent research however suggests that not all of these heads are necessary, and disabling one does not harm the performance of the Transformer because some of the information is redundant (<a href="https://text-machine-lab.github.io/blog/2020/bert-secrets/#what-types-of-self-attention-patterns-are-learned-and-how-many-of-each-type">The Dark Secrets of BERT</a>).</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Masked-multi-head-self-attention">
+<a class="anchor" href="#Masked-multi-head-self-attention" aria-hidden="true"><span class="octicon octicon-link"></span></a>Masked multi-head self-attention<a class="anchor-link" href="#Masked-multi-head-self-attention"> </a>
+</h3>
+<p>But if the Transformer can attend to all the other words, how do we know it's actually learning and not just repeating what it has already seen? The trick is to implement an attention mask that prevents the decoder from seeing what the next word is by setting it to <code>-inf</code>. The mask is applied after we've calculated the scores by multiplying the query and key vectors. So now when we take the softmax, the values in the mask go to 0 and the decoder can't attend to those words. The attention mask can be implemented like this (from <a href="https://nlp.seas.harvard.edu/2018/04/03/attention.html">The Annotated Transformer</a>):</p>
+<div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">subsequent_mask</span><span class="p">(</span><span class="n">size</span><span class="p">):</span>
+    <span class="n">attn_shape</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">size</span><span class="p">,</span><span class="n">size</span><span class="p">)</span>
+    <span class="n">subsequent_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">triu</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">attn_shape</span><span class="p">),</span> <span class="n">k</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">'uint8'</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">subsequent_mask</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
+</pre></div>
+<p><img src="https://jalammar.github.io/images/gpt2/transformer-attention-masked-scores-softmax.png" alt="" title="from The Illustrated GPT-2"></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Model-architecture">
+<a class="anchor" href="#Model-architecture" aria-hidden="true"><span class="octicon octicon-link"></span></a>Model architecture<a class="anchor-link" href="#Model-architecture"> </a>
+</h3>
+<p>Now that we understand multi-head and masked multi-head self-attention, it's easier to understand how they fit into the overall architecture of the Transformer. The Transformer stacks 6 encoder-decoders which are pretty much identical except the decoder has an additional masked multi-head self-attention sub-layer.</p>
+<p><img src="https://nlp.seas.harvard.edu/images/the-annotated-transformer_14_0.png" alt="" title="from The Annotated Transformer"></p>
+<h4 id="Encoder">
+<a class="anchor" href="#Encoder" aria-hidden="true"><span class="octicon octicon-link"></span></a>Encoder<a class="anchor-link" href="#Encoder"> </a>
+</h4>
+<p>The encoder has two sub-layers: multi-head self-attention and a fully connected feed-forward network. Between these sub-layers are a residual connection followed by a layer normalization step (check out the <a href="https://course.fast.ai/index.html">fast.ai</a> course if you need a refresher). The Transformer also adds positional encoding values to the input embeddings because it doesn't know the position of words in the sequence. So positional encodings are a way to explicitly tell the Transformer where words are with respect to one other.</p>
+<p>In brief, the encoder does a bunch of parallelized matrix multiplications (which is why the Transformer is so fast ⚡️) that gets passed off to the encoder above it. By stacking these blocks together, you create a more powerful network with richer representations.</p>
+<h4 id="Decoder">
+<a class="anchor" href="#Decoder" aria-hidden="true"><span class="octicon octicon-link"></span></a>Decoder<a class="anchor-link" href="#Decoder"> </a>
+</h4>
+<p>The decoder is pretty much identical to the encoder except it has a masked multi-head self-attention sub-layer. The self-attention sub-layer takes the key and values from the top encoder and it gets the query matrix from the masked attention sub-layer below it. Then we just do the same self-attention calculation. The output of each time-step is used by the bottom decoder at the next time-step to generate the next word. Like the encoder, we add positional encodings to indicate a word's location.</p>
+<h4 id="Linear-+-Softmax">
+<a class="anchor" href="#Linear-+-Softmax" aria-hidden="true"><span class="octicon octicon-link"></span></a>Linear + Softmax<a class="anchor-link" href="#Linear-+-Softmax"> </a>
+</h4>
+<p>Lastly, the decoder outputs a vector of numbers that are passed into a linear layer which produces a vector of logits (this is the same size as the model vocabulary). Pass this through a softmax to normalize the values so that they all sum to 1, and then select the highest value to get the predicted word.</p>
+<blockquote>
+<p>At each step the model is auto-regressive, consuming the previously generated symbols as additional input when generating the next (<a href="https://arxiv.org/abs/1706.03762">Vaswani et al.</a>).</p>
+</blockquote>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="GPT-2">
+<a class="anchor" href="#GPT-2" aria-hidden="true"><span class="octicon octicon-link"></span></a>GPT-2<a class="anchor-link" href="#GPT-2"> </a>
+</h2>
+<p><a href="https://openai.com/blog/better-language-models/#sample8">GPT-2</a> is a Transformer-based model, but instead of the encoder-decoder architecture, it gets rid of the encoder entirely. It is basically a big stack of decoders with 1.5 billion parameters, a souped-up version of the original GPT which had 110 million parameters. In late May 2020, OpenAI introduced GPT-2's successor, <a href="https://arxiv.org/abs/2005.14165">GPT-3</a>, which is an absolute unit with 175 billion parameters 🤯. The general strategy at OpenAI, when it comes to the GPT family, is to train bigger models on larger datasets. GPT-2 is a causal language model, meaning that it was trained to simply predict the next word in a sentence. The rationale is that if the model is able to predict the next word sufficiently well, this suggests that the model understands the text. For example, consider the sentence:</p>
+<p><code>Armadillos can hold their breath for up to six minutes and are known to walk _____.</code></p>
+<p>You'd probably say <code>underwater</code> because why else would it hold it's breath? So in order for GPT-2 to successfully predict <code>underwater</code>, it would have to understand that the armadillo is somewhere it can't breathe regularly. In turn, this broad understanding of text carries over to being able to perform well on various NLP tasks (Q&amp;A, summarization, reading comprehension, etc.) without having to fine-tune the model to these tasks. This is known as zero-shot learning, meaning you can just use the model out of the box.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Model-overview">
+<a class="anchor" href="#Model-overview" aria-hidden="true"><span class="octicon octicon-link"></span></a>Model overview<a class="anchor-link" href="#Model-overview"> </a>
+</h3>
+<p>During evaluation, GPT-2 is predicting one word at a time so it would be a waste to redo the self-attention calculations every step for tokens that have already been processed. Instead GPT-2 just keeps the key and value vectors for these tokens so that in the next step, it doesn't need to generate a new query, key and value vector. It simply reuses the ones it had saved from before.</p>
+<p>Let's go through the sentence below to really solidify our understanding of how GPT-2 selects the next word.</p>
+<p><code>Armadillos can hold their breath for up to six minutes and are known to walk _____</code>.</p>
+<ol>
+<li>Create the embedding and positional encodings for <code>walk</code>, and multiply that by a weight matrix to produce a concatenated vector of the query, key and values. </li>
+<li>Split this into the query, key and value vectors and then reshape these vectors into a matrix. Next, split this matrix up for each attention head.</li>
+<li>Then we do the usual attention calculation so that we score the current word against all the previous ones. This calculation is happening in each attention head.</li>
+<li>Once we have all the scores from each attention head, we concatenate them into a single vector. Then we multiply this by another weight matrix that maps the outputs of the attention head into an output vector that we send to the feed-forward sub-layer.</li>
+<li>The feed-forward network has two layers that the score vector passes through after which we do the usual softmax and get the probabilities over tokens.</li>
+</ol>
+<p><img src="https://jalammar.github.io/images/gpt2/gpt2-weights-2.png" alt="" title="from The Illustrated GPT-2"></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Byte-level-byte-pair-encoding-(BPE)">
+<a class="anchor" href="#Byte-level-byte-pair-encoding-(BPE)" aria-hidden="true"><span class="octicon octicon-link"></span></a>Byte-level byte-pair encoding (BPE)<a class="anchor-link" href="#Byte-level-byte-pair-encoding-(BPE)"> </a>
+</h3>
+<p>Traditional tokenization splits a sentence into individual words, but you could end up with a huge vocabulary resulting in memory issues. If we tokenize each character individually, then we run into the problem of losing some of the semantics of the sentence. As a result, the model doesn't learn the representations as well. Instead, we split the difference and do subword tokenization where we try and cover all the words in our vocabulary by building up the smallest collection of subwords possible. This generally means that the more common words will be tokenized as a whole word, while rarer ones are broken down into smaller chunks. For example, <code>permutation</code> has been split into <code>perm</code> and <code>utations</code> here.</p>
+<div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">transformers</span> <span class="kn">import</span> <span class="n">GPT2Tokenizer</span>
+<span class="n">tokenizer</span> <span class="o">=</span> <span class="n">GPT2Tokenizer</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="s1">'gpt2'</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">tokenizer</span><span class="o">.</span><span class="n">tokenize</span><span class="p">(</span><span class="s1">'There are more permutations of a standard deck of 52 cards than there are seconds since the Big Bang.'</span><span class="p">))</span>
+
+<span class="p">[</span><span class="s1">'There'</span><span class="p">,</span> <span class="s1">'Ġare'</span><span class="p">,</span> <span class="s1">'Ġmore'</span><span class="p">,</span> <span class="s1">'Ġperm'</span><span class="p">,</span> <span class="s1">'utations'</span><span class="p">,</span> <span class="s1">'Ġof'</span><span class="p">,</span> <span class="s1">'Ġa'</span><span class="p">,</span> <span class="s1">'Ġstandard'</span><span class="p">,</span> <span class="s1">'Ġdeck'</span><span class="p">,</span> <span class="s1">'Ġof'</span><span class="p">,</span> <span class="s1">'Ġ52'</span><span class="p">,</span> <span class="s1">'Ġcards'</span><span class="p">,</span> <span class="s1">'Ġthan'</span><span class="p">,</span> <span class="s1">'Ġthere'</span><span class="p">,</span> <span class="s1">'Ġare'</span><span class="p">,</span> <span class="s1">'Ġseconds'</span><span class="p">,</span> <span class="s1">'Ġsince'</span><span class="p">,</span> <span class="s1">'Ġthe'</span><span class="p">,</span> <span class="s1">'ĠBig'</span><span class="p">,</span> <span class="s1">'ĠBang'</span><span class="p">,</span> <span class="s1">'.'</span><span class="p">]</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>This is how the BPE algorithm works:</p>
+<ol>
+<li>Get the frequency of each word.</li>
+<li>Create a list of the frequencies of each character (we call them tokens).</li>
+<li>Merge the most common pair of tokens (also known as byte pairs, hence BPE).</li>
+<li>Add this pair to your list of tokens and then recount the frequencies for each token.</li>
+<li>Repeat these steps until you reach your vocabulary size. For GPT-2, this is 50000, so we stop training the tokenizer after 50000 merges.</li>
+</ol>
+<p>Anything that the tokenizer hasn't seen before will be tokenized as <code>&lt;unk&gt;</code> since it is not in the base vocabulary.</p>
+<p>But GPT-2 takes this a step further by using BPE on the byte sequences themselves 🤯. The characters you see on screen are represented by Unicode code points. For example, the character <code>H</code> looks like <code>U+0048</code> (we can ignore the <code>U</code>). So <code>0048</code> is broken down into 4 bytes here. There are 256 bytes available, which becomes the base vocabulary and then these can be merged together to represent any other token in the vocabulary. Now you can tokenize any text without ever needing an <code>&lt;unk&gt;</code> token.</p>
+<p>One more thing, the <code>Ġ</code> you see from the GPT-2 tokenizer actually represents a whitespace because the encoder doesn't like them, so we need to represent it with some bytes. This is literally from the encoder.py file in OpenAI's GPT-2 🤢:</p>
+<blockquote>
+<p>And avoids mapping to whitespace/control characters the bpe code barfs on</p>
+</blockquote>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Decoding-methods-🔍">
+<a class="anchor" href="#Decoding-methods-%F0%9F%94%8D" aria-hidden="true"><span class="octicon octicon-link"></span></a>Decoding methods 🔍<a class="anchor-link" href="#Decoding-methods-%F0%9F%94%8D"> </a>
+</h2>
+<p>There are several different decoding methods for generating text, covered in this excellent <a href="https://huggingface.co/blog/how-to-generate">post</a> by Patrick from Hugging Face, that I will briefly summarize here.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Greedy-search">
+<a class="anchor" href="#Greedy-search" aria-hidden="true"><span class="octicon octicon-link"></span></a>Greedy search<a class="anchor-link" href="#Greedy-search"> </a>
+</h3>
+<p>This method just strings words together based on the next word with the highest probability. But because it only considers the next word, it may miss a word two-steps ahead with an even higher probability.</p>
+<h3 id="Beam-search">
+<a class="anchor" href="#Beam-search" aria-hidden="true"><span class="octicon octicon-link"></span></a>Beam search<a class="anchor-link" href="#Beam-search"> </a>
+</h3>
+<p>Beam search addresses this by checking out a pre-defined number of steps ahead. So if you set <code>num_beams=3</code>, it will consider words three-steps ahead and return the sequence with the highest probability.</p>
+<p>But an issue shared by both greedy and beam search is that after a while, it may begin repeating itself. We can try and fix this by introducing a penalty if the models sees the same sequence of words more than once, like <code>San Francisco</code>. In this case, we would set the probability to zero the next time the model sees these two words. The downside though is that you'd only be able to mention <code>San Francisco</code> once in your generated text.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Sampling">
+<a class="anchor" href="#Sampling" aria-hidden="true"><span class="octicon octicon-link"></span></a>Sampling<a class="anchor-link" href="#Sampling"> </a>
+</h3>
+<p>The next two methods are sampling-based methods, which means randomly picking the next word based on its conditional probability distribution.</p>
+<p><code>Cows have best friends and get lonely if they are separated.</code></p>
+<p>Here, <code>have</code> is sampled from the conditioned probability distribution of <code>Cows</code>, and <code>best</code> is sampled from <code>Cows</code>, <code>have</code>, and so on. The downside of this approach is that often times you can end up generating nonsense. We can try and make this better by lowering the temperature. This squishes the probability distribution so that you are more likely to pick a high probability word. Notice how if you set the temperature to zero, it essentially becomes a greedy search because you are just picking the next word with the highest probability.</p>
+<h4 id="Top-K-sampling">
+<a class="anchor" href="#Top-K-sampling" aria-hidden="true"><span class="octicon octicon-link"></span></a>Top-<em>K</em> sampling<a class="anchor-link" href="#Top-K-sampling"> </a>
+</h4>
+<p>This is the sampling strategy GPT-2 uses. What happens here is that the top <em>K</em> most likely words are selected and the probability is redistributed among only these words. But the problem with this method is that it doesn't adapt well to the probability distribution of the next word.</p>
+<ul>
+<li>In the case of a flat distribution, by limiting to only <em>K</em> words, we can end up eliminating plausible word candidates which can hinder the models creativity.</li>
+<li>In the case of a sharp distribution, we run the risk of including some words that don't make sense in the sampling pool.</li>
+</ul>
+<h4 id="Top-p-sampling">
+<a class="anchor" href="#Top-p-sampling" aria-hidden="true"><span class="octicon octicon-link"></span></a>Top-<em>p</em> sampling<a class="anchor-link" href="#Top-p-sampling"> </a>
+</h4>
+<p>The issue here is that by fixing <em>K</em> to a certain number of words, we can't adapt when the next word probability distribution changes. So instead of setting <em>K</em>, we can try and set <em>p</em> instead, where <em>p</em> is the probability. What this means is that we find the set of words whose cumulative probability exceeds <em>p</em>. Then we redistribute the probability amongst this set of words. In doing so, the number of words in the next set (as opposed to a fixed <em>K</em>) can vary according to the probability distribution.</p>
+<p>What this translates to is that when the next word is less predictable, you have a wider range of words to sample from, giving you more options to be creative. When the next word is more predictable, you'll just get less words because it only needs to pick a few words to exceed <em>p</em>.</p>
+
+</div>
+</div>
+</div>
+</div>
+
+
+
+  </div><a class="u-url" href="/ingolmo/transformer/gpt2/huggingface/nlp/2020/09/08/transformer-gpt2.html" hidden></a>
+</article>
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/ingolmo/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/ingolmo/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/ingolmo/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p></p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/stevhliu" title="stevhliu"><svg class="svg-icon grey"><use xlink:href="/ingolmo/assets/minima-social-icons.svg#github"></use></svg></a></li><li><a rel="me" href="https://twitter.com/stevhliu" title="stevhliu"><svg class="svg-icon grey"><use xlink:href="/ingolmo/assets/minima-social-icons.svg#twitter"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>
